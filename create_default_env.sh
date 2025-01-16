@@ -1,8 +1,6 @@
 #!/bin/bash
 
-SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-PROJECT_ROOT_PATH=$SCRIPT_DIR"/.."
-ENV_FILE_PATH=$PROJECT_ROOT_PATH"/.env"
+ENV_FILE_PATH=".env"
 
 ENV_VARS=(
     "POSTGRES_ADDRESS=postgres"
@@ -17,6 +15,8 @@ ENV_VARS=(
     "CONFIG_PATH=config/config.yaml"
 )
 
+echo "" > $ENV_FILE_PATH
+
 for VAR in "${!ENV_VARS[@]}"; do
-  echo "$VAR=${ENV_VARS[$VAR]}" >> $ENV_FILE_PATH
+  echo "${ENV_VARS[$VAR]}" >> $ENV_FILE_PATH
 done
