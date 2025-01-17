@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/google/uuid"
 	"github.com/rozhnof/order-service/internal/models"
+	"github.com/rozhnof/order-service/internal/pkg/postgres"
 )
 
 var (
@@ -13,14 +13,20 @@ var (
 	ErrDuplicate      = errors.New("object is duplicate")
 )
 
-type OrderRepository struct{}
+type OrderRepository struct {
+	db postgres.Database
+}
 
-func NewOrderRepository() OrderRepository {
-	return OrderRepository{}
+func NewOrderRepository(db postgres.Database) OrderRepository {
+	return OrderRepository{
+		db: db,
+	}
 }
 
 func (r OrderRepository) Create(ctx context.Context, order models.Order) (models.Order, error) {
-	return models.Order{
-		ID: uuid.New(),
-	}, nil
+	if _, err := r.db.Exec(ctx, createOrderQuery, order.ID); err != nil {
+		return models.Order{}, err
+	}
+
+	return order, nil
 }
