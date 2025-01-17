@@ -4,25 +4,12 @@ import (
 	"context"
 	"log/slog"
 
+	"github.com/google/uuid"
 	"github.com/rozhnof/order-service/internal/models"
 )
 
 type OrderRepository interface {
 	Create(ctx context.Context, order models.Order) (models.Order, error)
-}
-
-type CreatedOrderMessage string
-type ProcessedOrderMessage string
-type NotificationMessage string
-
-type CreatedOrderSender interface {
-	SendMessage(ctx context.Context, msg CreatedOrderMessage) error
-}
-type ProcessedOrderSender interface {
-	SendMessage(ctx context.Context, msg ProcessedOrderMessage) error
-}
-type NotificationSender interface {
-	SendMessage(ctx context.Context, msg NotificationMessage) error
 }
 
 type OrderService struct {
@@ -32,7 +19,12 @@ type OrderService struct {
 	notificationSender   NotificationSender
 }
 
-func NewOrderService(repo OrderRepository, createdOrderSender CreatedOrderSender, processedOrderSender ProcessedOrderSender, notificationSender NotificationSender) OrderService {
+func NewOrderService(
+	repo OrderRepository,
+	createdOrderSender CreatedOrderSender,
+	processedOrderSender ProcessedOrderSender,
+	notificationSender NotificationSender,
+) OrderService {
 	return OrderService{
 		repo:                 repo,
 		createdOrderSender:   createdOrderSender,
@@ -42,6 +34,8 @@ func NewOrderService(repo OrderRepository, createdOrderSender CreatedOrderSender
 }
 
 func (s OrderService) CreateOrder(ctx context.Context, order models.Order) (models.Order, error) {
+	order.ID = uuid.New()
+
 	order, err := s.repo.Create(ctx, order)
 	if err != nil {
 		return models.Order{}, err
