@@ -7,9 +7,17 @@ import (
 
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/rozhnof/order-service/internal/app"
+	"github.com/rozhnof/order-service/internal/pkg/mail"
 	"github.com/rozhnof/order-service/internal/pkg/postgres"
 	"github.com/rozhnof/order-service/internal/pkg/rabbitmq"
 	"github.com/rozhnof/order-service/internal/services"
+)
+
+const (
+	email    = "golang.auth.service@gmail.com"
+	password = "jybh ayjb qosq kykn"
+	address  = "smtp.gmail.com"
+	port     = "587"
 )
 
 type ConsumerApp struct {
@@ -17,6 +25,7 @@ type ConsumerApp struct {
 	createdOrderConsumer   rabbitmq.Consumer[services.CreatedOrderMessage]
 	processedOrderConsumer rabbitmq.Consumer[services.ProcessedOrderMessage]
 	notificationConsumer   rabbitmq.Consumer[services.NotificationMessage]
+	mailSender             mail.Sender
 }
 
 func NewConsumerApp(ctx context.Context, ch *amqp.Channel, logger *slog.Logger, db postgres.Database) (ConsumerApp, error) {
@@ -39,11 +48,17 @@ func NewConsumerApp(ctx context.Context, ch *amqp.Channel, logger *slog.Logger, 
 		return ConsumerApp{}, err
 	}
 
+	mailSender, err := mail.NewSender(email, password, address, port)
+	if err != nil {
+		return ConsumerApp{}, err
+	}
+
 	return ConsumerApp{
 		logger:                 logger,
 		createdOrderConsumer:   createdOrderConsumer,
 		processedOrderConsumer: processedOrderConsumer,
 		notificationConsumer:   notificationConsumer,
+		mailSender:             mailSender,
 	}, nil
 }
 
