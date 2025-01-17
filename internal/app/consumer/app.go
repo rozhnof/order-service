@@ -2,21 +2,21 @@ package consumer
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log/slog"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/rozhnof/order-service/internal/app"
 	"github.com/rozhnof/order-service/internal/pkg/postgres"
+	"github.com/rozhnof/order-service/internal/pkg/rabbitmq"
 	"github.com/rozhnof/order-service/internal/services"
 )
 
 type ConsumerApp struct {
 	logger                 *slog.Logger
-	createdOrderMessages   <-chan amqp.Delivery
-	processedOrderMessages <-chan amqp.Delivery
-	notificationMessages   <-chan amqp.Delivery
+	createdOrderConsumer   rabbitmq.Consumer[services.CreatedOrderMessage]
+	processedOrderConsumer rabbitmq.Consumer[services.ProcessedOrderMessage]
+	notificationConsumer   rabbitmq.Consumer[services.NotificationMessage]
 }
 
 func NewConsumerApp(ctx context.Context, ch *amqp.Channel, logger *slog.Logger, db postgres.Database) (ConsumerApp, error) {
@@ -24,53 +24,33 @@ func NewConsumerApp(ctx context.Context, ch *amqp.Channel, logger *slog.Logger, 
 		return ConsumerApp{}, err
 	}
 
-	createdOrderMessages, err := Consume(ch, app.CreatedOrderQueue)
+	createdOrderConsumer, err := rabbitmq.NewConsumer[services.CreatedOrderMessage](ch, app.CreatedOrderQueue, logger)
 	if err != nil {
 		return ConsumerApp{}, err
 	}
 
-	processedOrderMessages, err := Consume(ch, app.ProcessedOrderQueue)
+	processedOrderConsumer, err := rabbitmq.NewConsumer[services.ProcessedOrderMessage](ch, app.ProcessedOrderQueue, logger)
 	if err != nil {
 		return ConsumerApp{}, err
 	}
 
-	notificationMessages, err := Consume(ch, app.NotificationQueue)
+	notificationConsumer, err := rabbitmq.NewConsumer[services.NotificationMessage](ch, app.NotificationQueue, logger)
 	if err != nil {
 		return ConsumerApp{}, err
 	}
 
 	return ConsumerApp{
 		logger:                 logger,
-		createdOrderMessages:   createdOrderMessages,
-		processedOrderMessages: processedOrderMessages,
-		notificationMessages:   notificationMessages,
+		createdOrderConsumer:   createdOrderConsumer,
+		processedOrderConsumer: processedOrderConsumer,
+		notificationConsumer:   notificationConsumer,
 	}, nil
 }
 
-func Consume(ch *amqp.Channel, qs app.QueueSettings) (<-chan amqp.Delivery, error) {
-	return ch.Consume(qs.Name, "", qs.AutoAck, qs.Exclusive, qs.NoLocal, qs.NoWait, qs.Args)
-}
-
 func (a *ConsumerApp) Start(ctx context.Context) {
-	go RunProcess(ctx, a.logger, a.createdOrderMessages, ProcessCreatedOrderMessage)
-	go RunProcess(ctx, a.logger, a.processedOrderMessages, ProcessProcessedOrderMessage)
-	go RunProcess(ctx, a.logger, a.notificationMessages, ProcessNotificationMessage)
-}
-
-func RunProcess[T any](ctx context.Context, logger *slog.Logger, messages <-chan amqp.Delivery, f func(m T)) {
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case m := <-messages:
-			var msg T
-			if err := json.Unmarshal(m.Body, &msg); err != nil {
-				logger.Error("failed unmarshal rabbitmq message", slog.String("error", err.Error()))
-			}
-
-			f(msg)
-		}
-	}
+	go a.createdOrderConsumer.ConsumeMessages(ctx, ProcessCreatedOrderMessage)
+	go a.processedOrderConsumer.ConsumeMessages(ctx, ProcessProcessedOrderMessage)
+	go a.notificationConsumer.ConsumeMessages(ctx, ProcessNotificationMessage)
 }
 
 func ProcessCreatedOrderMessage(msg services.CreatedOrderMessage) {

@@ -34,9 +34,9 @@ func NewPublisherApp(ctx context.Context, ch *amqp.Channel, logger *slog.Logger,
 	)
 
 	var (
-		createdOrderSender   = rabbitmq.NewSender[services.CreatedOrderMessage](ch, app.CreatedOrderQueue.Name)
-		processedOrderSender = rabbitmq.NewSender[services.ProcessedOrderMessage](ch, app.ProcessedOrderQueue.Name)
-		notificationSender   = rabbitmq.NewSender[services.NotificationMessage](ch, app.NotificationQueue.Name)
+		createdOrderSender   = rabbitmq.NewSender[services.CreatedOrderMessage](ch, app.CreatedOrderQueue)
+		processedOrderSender = rabbitmq.NewSender[services.ProcessedOrderMessage](ch, app.ProcessedOrderQueue)
+		notificationSender   = rabbitmq.NewSender[services.NotificationMessage](ch, app.NotificationQueue)
 	)
 
 	var (
