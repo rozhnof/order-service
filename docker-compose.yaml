@@ -24,6 +24,16 @@ services:
       - postgres-data:/var/lib/repository/data
     env_file: ".env"
 
+  migrate:
+    image: migrate/migrate:4
+    command: -path=./migrations/ -database "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable" up
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./migrations:/migrations:ro
+    env_file: ".env"
+
 volumes:
   rabbitmq-data:
   postgres-data:
