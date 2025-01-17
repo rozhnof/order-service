@@ -24,7 +24,9 @@ func NewOrderRepository(db postgres.Database) OrderRepository {
 }
 
 func (r OrderRepository) Create(ctx context.Context, order models.Order) (models.Order, error) {
-	if _, err := r.db.Exec(ctx, createOrderQuery, order.ID); err != nil {
+	const query = `INSERT INTO orders(id) VALUES ($1)`
+
+	if _, err := r.db.Exec(ctx, query, order.ID); err != nil {
 		return models.Order{}, err
 	}
 
