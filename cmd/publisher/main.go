@@ -13,7 +13,7 @@ import (
 
 const (
 	rabbitURL   = "amqp://user:password@localhost:5672/"
-	postgresURL = "postgres://user:password@postgres:5432/order_db"
+	postgresURL = "postgres://user:password@localhost:5432/order_db?sslmode=disable"
 )
 
 func main() {
@@ -53,7 +53,7 @@ func main() {
 	defer postgresDatabase.Close()
 	logger.Info("init postgres success")
 
-	a, err := app.NewOrderProcessApp(ctx, ch, logger)
+	a, err := app.NewOrderProcessApp(ctx, ch, logger, postgresDatabase)
 	if err != nil {
 		logger.Error("init app failed", slog.String("error", err.Error()))
 		return
