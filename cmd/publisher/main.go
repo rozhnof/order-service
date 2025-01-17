@@ -8,6 +8,7 @@ import (
 
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/rozhnof/order-service/internal/app"
+	"github.com/rozhnof/order-service/internal/app/publisher"
 	"github.com/rozhnof/order-service/internal/pkg/postgres"
 )
 
@@ -53,14 +54,14 @@ func main() {
 	defer postgresDatabase.Close()
 	logger.Info("init postgres success")
 
-	a, err := app.NewOrderProcessApp(ctx, ch, logger, postgresDatabase)
+	a, err := publisher.NewPublisherApp(ctx, ch, logger, postgresDatabase)
 	if err != nil {
 		logger.Error("init app failed", slog.String("error", err.Error()))
 		return
 	}
 	logger.Info("init app success")
 
-	logger.Info("start app")
+	logger.Info("run app")
 	if err := a.Run(ctx); err != nil {
 		logger.Error("app error", slog.String("error", err.Error()))
 		return
