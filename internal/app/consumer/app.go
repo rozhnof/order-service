@@ -63,19 +63,29 @@ func NewConsumerApp(ctx context.Context, ch *amqp.Channel, logger *slog.Logger, 
 }
 
 func (a *ConsumerApp) Start(ctx context.Context) {
-	go a.createdOrderConsumer.ConsumeMessages(ctx, ProcessCreatedOrderMessage)
-	go a.processedOrderConsumer.ConsumeMessages(ctx, ProcessProcessedOrderMessage)
-	go a.notificationConsumer.ConsumeMessages(ctx, ProcessNotificationMessage)
+	go a.createdOrderConsumer.ConsumeMessages(ctx, a.ProcessCreatedOrderMessage)
+	go a.processedOrderConsumer.ConsumeMessages(ctx, a.ProcessProcessedOrderMessage)
+	go a.notificationConsumer.ConsumeMessages(ctx, a.ProcessNotificationMessage)
 }
 
-func ProcessCreatedOrderMessage(msg services.CreatedOrderMessage) {
+func (a *ConsumerApp) ProcessCreatedOrderMessage(msg services.CreatedOrderMessage) {
 	fmt.Println("cunsumed CreatedOrderMessage", msg)
 }
 
-func ProcessProcessedOrderMessage(msg services.ProcessedOrderMessage) {
+func (a *ConsumerApp) ProcessProcessedOrderMessage(msg services.ProcessedOrderMessage) {
 	fmt.Println("cunsumed ProcessedOrderMessage", msg)
 }
 
-func ProcessNotificationMessage(msg services.NotificationMessage) {
+func (a *ConsumerApp) ProcessNotificationMessage(msg services.NotificationMessage) {
 	fmt.Println("cunsumed NotificationMessage", msg)
+
+	mailMsg := mail.Message{
+		Receiver: msg.ClientEmail,
+		Subject:  msg.Subject,
+		Body:     msg.Message,
+	}
+
+	if err := a.mailSender.SendMessage(mailMsg); err != nil {
+		a.logger.Error("failed send email message", slog.String("error", err.Error()))
+	}
 }

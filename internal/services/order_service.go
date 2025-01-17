@@ -4,7 +4,6 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/google/uuid"
 	"github.com/rozhnof/order-service/internal/models"
 )
 
@@ -33,8 +32,8 @@ func NewOrderService(
 	}
 }
 
-func (s OrderService) CreateOrder(ctx context.Context, order models.Order) (models.Order, error) {
-	order.ID = uuid.New()
+func (s OrderService) CreateOrder(ctx context.Context, clientEmail string) (models.Order, error) {
+	order := models.NewOrder(clientEmail)
 
 	order, err := s.repo.Create(ctx, order)
 	if err != nil {
@@ -49,7 +48,12 @@ func (s OrderService) CreateOrder(ctx context.Context, order models.Order) (mode
 		slog.Warn("failed send ProcessedOrderMessage", slog.String("error", err.Error()))
 	}
 
-	if err := s.notificationSender.SendMessage(ctx, "NotificationMessage"); err != nil {
+	notificationMessage := NotificationMessage{
+		ClientEmail: order.ClientEmail,
+		Subject:     "Create Order",
+		Message:     "Order successfuly created",
+	}
+	if err := s.notificationSender.SendMessage(ctx, notificationMessage); err != nil {
 		slog.Warn("failed send NotificationMessage", slog.String("error", err.Error()))
 	}
 

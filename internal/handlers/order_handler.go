@@ -20,22 +20,22 @@ func NewOrderHandler(service services.OrderService) OrderHandler {
 	}
 }
 
-type CreateOrderRequest struct{}
+type CreateOrderRequest struct {
+	ClientEmail string `json:"client_email"`
+}
 
 type CreateOrderResponse struct {
 	Order models.Order `json:"order"`
 }
 
 func (h OrderHandler) CreateOrder(c *gin.Context) {
-	// var request CreateOrderRequest
-	// if err := c.ShouldBindJSON(&request); err != nil {
-	// 	c.String(http.StatusBadRequest, "invalid request")
-	// 	return
-	// }
+	var request CreateOrderRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.String(http.StatusBadRequest, "invalid request")
+		return
+	}
 
-	var order models.Order
-
-	createdOrder, err := h.service.CreateOrder(c.Request.Context(), order)
+	createdOrder, err := h.service.CreateOrder(c.Request.Context(), request.ClientEmail)
 	if err != nil {
 		if errors.Is(err, repository.ErrObjectNotFound) {
 			c.String(http.StatusNotFound, err.Error())
