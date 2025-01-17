@@ -25,16 +25,12 @@ func (s Sender[T]) SendMessage(ctx context.Context, msg T) error {
 		return err
 	}
 
-	if err := s.channel.Publish(
-		"",
-		s.queueName,
-		false,
-		false,
-		amqp.Publishing{
-			ContentType: "application/json",
-			Body:        data,
-		},
-	); err != nil {
+	rabbitMsg := amqp.Publishing{
+		ContentType: "application/json",
+		Body:        data,
+	}
+
+	if err := s.channel.Publish("", s.queueName, false, false, rabbitMsg); err != nil {
 		return err
 	}
 
