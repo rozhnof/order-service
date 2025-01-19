@@ -68,15 +68,15 @@ func (a *ConsumerApp) Start(ctx context.Context) {
 	go a.notificationConsumer.ConsumeMessages(ctx, a.HandleNotificationMessage)
 }
 
-func (a *ConsumerApp) HandleCreatedOrderMessage(msg services.CreatedOrderMessage) {
+func (a *ConsumerApp) HandleCreatedOrderMessage(ctx context.Context, msg services.CreatedOrderMessage) {
 	fmt.Println("cunsumed CreatedOrderMessage", msg)
 }
 
-func (a *ConsumerApp) HandleProcessedOrderMessage(msg services.ProcessedOrderMessage) {
+func (a *ConsumerApp) HandleProcessedOrderMessage(ctx context.Context, msg services.ProcessedOrderMessage) {
 	fmt.Println("cunsumed ProcessedOrderMessage", msg)
 }
 
-func (a *ConsumerApp) HandleNotificationMessage(msg services.NotificationMessage) {
+func (a *ConsumerApp) HandleNotificationMessage(ctx context.Context, msg services.NotificationMessage) {
 	fmt.Println("cunsumed NotificationMessage", msg)
 
 	mailMsg := mail.Message{

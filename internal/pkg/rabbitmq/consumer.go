@@ -22,7 +22,7 @@ func NewConsumer[T any](channel *amqp.Channel, queueName string, logger *slog.Lo
 	}, nil
 }
 
-func (c Consumer[T]) ConsumeMessages(ctx context.Context, f func(T)) error {
+func (c Consumer[T]) ConsumeMessages(ctx context.Context, f func(context.Context, T)) error {
 	messages, err := c.channel.Consume(c.queueName, "", false, false, false, false, nil)
 	if err != nil {
 		return err
@@ -38,7 +38,7 @@ func (c Consumer[T]) ConsumeMessages(ctx context.Context, f func(T)) error {
 				c.logger.Error("failed unmarshal rabbitmq message", slog.String("error", err.Error()))
 			}
 
-			f(msg)
+			f(ctx, msg)
 		}
 	}
 }
