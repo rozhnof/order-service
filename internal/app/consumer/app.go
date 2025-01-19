@@ -69,15 +69,15 @@ func (a *ConsumerApp) Start(ctx context.Context) {
 }
 
 func (a *ConsumerApp) HandleCreatedOrderMessage(ctx context.Context, msg services.CreatedOrderMessage) {
-	fmt.Println("cunsumed CreatedOrderMessage", msg)
+	fmt.Println("cunsumed message from created_order queue:", msg)
 }
 
 func (a *ConsumerApp) HandleProcessedOrderMessage(ctx context.Context, msg services.ProcessedOrderMessage) {
-	fmt.Println("cunsumed ProcessedOrderMessage", msg)
+	fmt.Println("cunsumed message from processed_order queue", msg)
 }
 
 func (a *ConsumerApp) HandleNotificationMessage(ctx context.Context, msg services.NotificationMessage) {
-	fmt.Println("cunsumed NotificationMessage", msg)
+	fmt.Println("cunsumed message from notification queue", msg)
 
 	mailMsg := mail.Message{
 		Receiver: msg.ClientEmail,
