@@ -63,20 +63,20 @@ func NewConsumerApp(ctx context.Context, ch *amqp.Channel, logger *slog.Logger, 
 }
 
 func (a *ConsumerApp) Start(ctx context.Context) {
-	go a.createdOrderConsumer.ConsumeMessages(ctx, a.ProcessCreatedOrderMessage)
-	go a.processedOrderConsumer.ConsumeMessages(ctx, a.ProcessProcessedOrderMessage)
-	go a.notificationConsumer.ConsumeMessages(ctx, a.ProcessNotificationMessage)
+	go a.createdOrderConsumer.ConsumeMessages(ctx, a.HandleCreatedOrderMessage)
+	go a.processedOrderConsumer.ConsumeMessages(ctx, a.HandleProcessedOrderMessage)
+	go a.notificationConsumer.ConsumeMessages(ctx, a.HandleNotificationMessage)
 }
 
-func (a *ConsumerApp) ProcessCreatedOrderMessage(msg services.CreatedOrderMessage) {
+func (a *ConsumerApp) HandleCreatedOrderMessage(msg services.CreatedOrderMessage) {
 	fmt.Println("cunsumed CreatedOrderMessage", msg)
 }
 
-func (a *ConsumerApp) ProcessProcessedOrderMessage(msg services.ProcessedOrderMessage) {
+func (a *ConsumerApp) HandleProcessedOrderMessage(msg services.ProcessedOrderMessage) {
 	fmt.Println("cunsumed ProcessedOrderMessage", msg)
 }
 
-func (a *ConsumerApp) ProcessNotificationMessage(msg services.NotificationMessage) {
+func (a *ConsumerApp) HandleNotificationMessage(msg services.NotificationMessage) {
 	fmt.Println("cunsumed NotificationMessage", msg)
 
 	mailMsg := mail.Message{
