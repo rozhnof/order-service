@@ -8,6 +8,7 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/rozhnof/order-service/internal/app"
 	"github.com/rozhnof/order-service/internal/handlers"
+	"github.com/rozhnof/order-service/internal/pkg/config"
 	"github.com/rozhnof/order-service/internal/pkg/postgres"
 	"github.com/rozhnof/order-service/internal/pkg/rabbitmq"
 	"github.com/rozhnof/order-service/internal/pkg/server"
@@ -15,16 +16,19 @@ import (
 	"github.com/rozhnof/order-service/internal/services"
 )
 
-const (
-	addr = ":8080"
-)
-
 type PublisherApp struct {
 	logger     *slog.Logger
 	httpServer *server.HTTPServer
 }
 
-func NewPublisherApp(ctx context.Context, ch *amqp.Channel, logger *slog.Logger, db postgres.Database) (PublisherApp, error) {
+type Config struct {
+	Logger   config.Logger `yaml:"logging" env-required:"true"`
+	Server   config.Server `yaml:"server" env-required:"true"`
+	RabbitMQ config.RabbitMQ
+	Postgres config.Postgres
+}
+
+func NewPublisherApp(ctx context.Context, cfg Config, ch *amqp.Channel, logger *slog.Logger, db postgres.Database) (PublisherApp, error) {
 	if err := app.InitQueues(ch); err != nil {
 		return PublisherApp{}, err
 	}
@@ -47,7 +51,7 @@ func NewPublisherApp(ctx context.Context, ch *amqp.Channel, logger *slog.Logger,
 	router := gin.New()
 	InitRoutes(router, orderHandler)
 
-	httpServer := server.NewHTTPServer(ctx, addr, router, logger)
+	httpServer := server.NewHTTPServer(ctx, cfg.Server.Address, router, logger)
 
 	return PublisherApp{
 		logger:     logger,

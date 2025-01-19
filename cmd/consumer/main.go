@@ -2,39 +2,52 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
+	"os"
 	"os/signal"
 	"syscall"
 
-	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/rozhnof/order-service/internal/app"
 	"github.com/rozhnof/order-service/internal/app/consumer"
+	"github.com/rozhnof/order-service/internal/pkg/config"
 	"github.com/rozhnof/order-service/internal/pkg/postgres"
+	"github.com/rozhnof/order-service/internal/pkg/rabbitmq"
 )
 
 const (
-	rabbitURL   = "amqp://user:password@localhost:5672/"
-	postgresURL = "postgres://user:password@localhost:5432/order_db?sslmode=disable"
+	EnvConfigPath = "CONFIG_PATH"
 )
 
 func main() {
 	ctx, _ := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 
-	logger := app.NewLogger()
+	cfg, err := config.NewConfig[consumer.Config](os.Getenv(EnvConfigPath))
+	if err != nil {
+		slog.Error("init config failed", slog.String("error", err.Error()))
+		return
+	}
 
-	conn, err := amqp.Dial(rabbitURL)
+	logger, err := app.NewLogger(cfg.Logger)
+	if err != nil {
+		slog.Error("init logger failed", slog.String("error", err.Error()))
+		return
+	}
+
+	rabbitURL := fmt.Sprintf(rabbitmq.URL, cfg.RabbitMQ.User, cfg.RabbitMQ.Password, cfg.RabbitMQ.Address, cfg.RabbitMQ.Port)
+	rabbitConnection, err := rabbitmq.NewConnection(rabbitURL)
 	if err != nil {
 		logger.Error("init rabbitmq connection failed", slog.String("error", err.Error()))
 		return
 	}
 	defer func() {
-		if err := conn.Close(); err != nil {
+		if err := rabbitConnection.Close(); err != nil {
 			logger.Error("close rabbitmq connection failed", slog.String("error", err.Error()))
 		}
 	}()
 	logger.Info("init rabbitmq connection success")
 
-	ch, err := conn.Channel()
+	ch, err := rabbitConnection.Channel()
 	if err != nil {
 		logger.Error("init rabbitmq channel failed", slog.String("error", err.Error()))
 		return
@@ -46,6 +59,7 @@ func main() {
 	}()
 	logger.Info("init rabbitmq channel success")
 
+	postgresURL := fmt.Sprintf(postgres.URL, cfg.Postgres.User, cfg.Postgres.Password, cfg.Postgres.Address, cfg.Postgres.Port, cfg.Postgres.DB)
 	postgresDatabase, err := postgres.NewDatabase(ctx, postgresURL)
 	if err != nil {
 		logger.Error("init postgres failed", slog.String("error", err.Error()))
@@ -54,7 +68,7 @@ func main() {
 	defer postgresDatabase.Close()
 	logger.Info("init postgres success")
 
-	a, err := consumer.NewConsumerApp(ctx, ch, logger, postgresDatabase)
+	a, err := consumer.NewConsumerApp(ctx, cfg, ch, logger, postgresDatabase)
 	if err != nil {
 		logger.Error("init app failed", slog.String("error", err.Error()))
 		return
