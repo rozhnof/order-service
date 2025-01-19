@@ -1,6 +1,6 @@
 CREATE TABLE clients (
     id UUID PRIMARY KEY,
-    email VARCHAR(128) NOT NULL
+    email VARCHAR(128) NOT NULL UNIQUE
 );
 
 CREATE TABLE orders (
