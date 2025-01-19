@@ -1,8 +1,14 @@
 package services
 
-import "context"
+import (
+	"context"
 
-type CreatedOrderMessage string
+	"github.com/rozhnof/order-service/internal/models"
+)
+
+type CreatedOrderMessage struct {
+	Order models.Order
+}
 
 type CreatedOrderSender interface {
 	SendMessage(ctx context.Context, msg CreatedOrderMessage) error
