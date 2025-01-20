@@ -45,10 +45,13 @@ func NewPublisherApp(ctx context.Context, cfg Config, ch *amqp.Channel, logger *
 
 	var (
 		orderService = services.NewOrderService(repo, createdOrderSender, processedOrderSender, notificationSender)
-		orderHandler = handlers.NewOrderHandler(orderService)
+		orderHandler = handlers.NewOrderHandler(orderService, logger)
 	)
 
 	router := gin.New()
+	router.Use(
+		LogMiddleware(logger),
+	)
 	InitRoutes(router, orderHandler)
 
 	httpServer := server.NewHTTPServer(ctx, cfg.Server.Address, router, logger)
