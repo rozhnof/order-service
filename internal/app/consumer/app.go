@@ -9,7 +9,6 @@ import (
 	"github.com/rozhnof/order-service/internal/app"
 	"github.com/rozhnof/order-service/internal/pkg/config"
 	"github.com/rozhnof/order-service/internal/pkg/mail"
-	"github.com/rozhnof/order-service/internal/pkg/postgres"
 	"github.com/rozhnof/order-service/internal/pkg/rabbitmq"
 	"github.com/rozhnof/order-service/internal/services"
 )
@@ -28,7 +27,7 @@ type Config struct {
 	Mail     config.Mail
 }
 
-func NewConsumerApp(ctx context.Context, cfg Config, ch *amqp.Channel, logger *slog.Logger, db postgres.Database) (ConsumerApp, error) {
+func NewConsumerApp(ctx context.Context, cfg Config, ch *amqp.Channel, logger *slog.Logger) (ConsumerApp, error) {
 	if err := app.InitQueues(ch); err != nil {
 		return ConsumerApp{}, err
 	}

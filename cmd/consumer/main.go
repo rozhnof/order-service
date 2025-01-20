@@ -11,7 +11,6 @@ import (
 	"github.com/rozhnof/order-service/internal/app"
 	"github.com/rozhnof/order-service/internal/app/consumer"
 	"github.com/rozhnof/order-service/internal/pkg/config"
-	"github.com/rozhnof/order-service/internal/pkg/postgres"
 	"github.com/rozhnof/order-service/internal/pkg/rabbitmq"
 )
 
@@ -59,16 +58,7 @@ func main() {
 	}()
 	logger.Info("init rabbitmq channel success")
 
-	postgresURL := fmt.Sprintf(postgres.URL, cfg.Postgres.User, cfg.Postgres.Password, cfg.Postgres.Address, cfg.Postgres.Port, cfg.Postgres.DB)
-	postgresDatabase, err := postgres.NewDatabase(ctx, postgresURL)
-	if err != nil {
-		logger.Error("init postgres failed", slog.String("error", err.Error()))
-		return
-	}
-	defer postgresDatabase.Close()
-	logger.Info("init postgres success")
-
-	a, err := consumer.NewConsumerApp(ctx, cfg, ch, logger, postgresDatabase)
+	a, err := consumer.NewConsumerApp(ctx, cfg, ch, logger)
 	if err != nil {
 		logger.Error("init app failed", slog.String("error", err.Error()))
 		return
