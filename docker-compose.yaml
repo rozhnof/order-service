@@ -1,6 +1,11 @@
 services:
   rabbitmq:
     image: rabbitmq:management-alpine
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 3s
+      timeout: 10s
+      retries: 5
     hostname: rabbitmq
     environment:
       - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbit disk_free_limit 2147483648
@@ -16,7 +21,7 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 3s
-      timeout: 30s
+      timeout: 10s
       retries: 5
     ports:
       - "5432:5432"
