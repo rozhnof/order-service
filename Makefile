@@ -11,17 +11,17 @@ MIGRATE_CMD := $(shell which migrate)
 MIGRATE_VERSION := v4.15.2
 
 PROJECT_ROOT_PATH=$(CURDIR)
-MIGRATION_PATH=$(PROJECT_ROOT_PATH)/migrations
+MIGRATIONS_DIR=$(PROJECT_ROOT_PATH)/migrations
+DOCKER_COMPOSE_PATH=$(PROJECT_ROOT_PATH)/docker-compose.yaml
 
-CREATE_DEFAULT_ENV_SCRIPT=$(PROJECT_ROOT_PATH)/create_default_env.sh
+SCRIPTS_DIR=$(PROJECT_ROOT_PATH)/scripts
+CREATE_DEFAULT_ENV_SCRIPT=$(SCRIPTS_DIR)/create_default_env.sh
+CREATE_LOCAL_ENV_SCRIPT=$(SCRIPTS_DIR)/create_local_env.sh
 
-DEPLOYMENTS_PATH=$(PROJECT_ROOT_PATH)/deployments
-DOCKER_COMPOSE_PATH=$(DEPLOYMENTS_PATH)/docker-compose.yaml
-TEST_DOCKER_COMPOSE_PATH=$(DEPLOYMENTS_PATH)/docker-compose-test.yaml
+PUBLISHER_APP_PATH=$(PROJECT_ROOT_PATH)/cmd/publisher/main.go
+CONSUMER_APP_PATH=$(PROJECT_ROOT_PATH)/cmd/consumer/main.go
 
-DATABASE_URL=postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_ADDRESS):$(POSTGRES_PORT)/$(POSTGRES_DB)?sslmode=$(POSTGRES_SSLMODE)
-
-MIGRATION_NAME := $(name)
+DATABASE_URL=postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_ADDRESS):$(POSTGRES_PORT)/$(POSTGRES_DB)?sslmode=disable
 
 
 
@@ -32,22 +32,6 @@ env:
 .PHONY: local-env
 local-env:
 	$(CREATE_LOCAL_ENV_SCRIPT)
-	cp $(PROJECT_ROOT_PATH)/.env $(DEPLOYMENTS_PATH)/.env
-
-.PHONY: test-env
-test-env:
-	$(CREATE_TEST_ENV_SCRIPT)
-	cp $(PROJECT_ROOT_PATH)/.env $(DEPLOYMENTS_PATH)/.env
-
-
-
-.PHONY: docs
-docs:
-	swag init -g $(SERVICE_PATH_RELATIVE)
-
-.PHONY: sqlc-gen
-sqlc-gen:
-	sqlc generate -f ./config/sqlc.yaml
 
 
 
@@ -64,27 +48,12 @@ down-service:
 	docker-compose -p $(PROJECT_NAME) -f $(DOCKER_COMPOSE_PATH) down
 
 .PHONY: run-service
-run-service:
-	go run $(SERVICE_PATH)
+run-publisher:
+	go run $(PUBLISHER_APP_PATH)
 
-
-
-.PHONY: build-test-service
-build-test-service: 
-	docker-compose -p $(PROJECT_NAME)_test -f $(TEST_DOCKER_COMPOSE_PATH) build
-
-.PHONY: up-test-service
-up-test-service: 
-	docker-compose -p $(PROJECT_NAME)_test -f $(TEST_DOCKER_COMPOSE_PATH) up -d
-
-.PHONY: down-test-service
-down-test-service: 
-	docker-compose -p $(PROJECT_NAME)_test -f $(TEST_DOCKER_COMPOSE_PATH) down
-
-.PHONY: run-functional-tests
-run-functional-tests:
-	go test -tags=functional -count=1 ./tests/...
-
+.PHONY: run-service
+run-consumer:
+	go run $(CONSUMER_APP_PATH)
 
 
 .PHONY: .check-migrate
@@ -97,13 +66,14 @@ endif
 .PHONY: migration-up
 migration-up: .check-migrate
 	@echo "Running migrations up..."
-	migrate -path $(MIGRATION_PATH) -database $(DATABASE_URL) up
+	migrate -path $(MIGRATIONS_DIR) -database $(DATABASE_URL) up
 
 .PHONY: migration-down
 migration-down: .check-migrate
 	@echo "Running migrations down..."
-	migrate -path $(MIGRATION_PATH) -database $(DATABASE_URL) down
+	migrate -path $(MIGRATIONS_DIR) -database $(DATABASE_URL) down
 
+MIGRATION_NAME := $(name)
 .PHONY: migration-create
 migration-create: .check-migrate
 	@if [ -z "$(MIGRATION_NAME)" ]; then \
@@ -111,7 +81,7 @@ migration-create: .check-migrate
 		exit 1; \
 	fi
 	@echo "Creating new migration: $(MIGRATION_NAME)"
-	migrate create -ext sql -dir $(MIGRATION_PATH) -seq $(MIGRATION_NAME)
+	migrate create -ext sql -dir $(MIGRATIONS_DIR) -seq $(MIGRATION_NAME)
 
 
 
