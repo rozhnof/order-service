@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"log/slog"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -12,11 +13,13 @@ import (
 
 type OrderHandler struct {
 	service services.OrderService
+	logger  *slog.Logger
 }
 
-func NewOrderHandler(service services.OrderService) OrderHandler {
+func NewOrderHandler(service services.OrderService, logger *slog.Logger) OrderHandler {
 	return OrderHandler{
 		service: service,
+		logger:  logger,
 	}
 }
 
@@ -41,6 +44,8 @@ func (h OrderHandler) CreateOrder(c *gin.Context) {
 			c.String(http.StatusNotFound, err.Error())
 			return
 		}
+
+		h.logger.Warn("failed create order", slog.String("error", err.Error()))
 
 		c.Status(http.StatusInternalServerError)
 		return
