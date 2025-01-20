@@ -1,4 +1,30 @@
 services:
+  publisher:
+    build:
+      context: .
+      dockerfile: Dockerfile.publisher
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    ports:
+      - "8080:8080" 
+    env_file: ".env"
+    volumes:
+      - ./config:/app/config
+
+  consumer:
+    build:
+      context: .
+      dockerfile: Dockerfile.consumer
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    env_file: ".env"
+    volumes:
+      - ./config:/app/config
+
   rabbitmq:
     image: rabbitmq:management-alpine
     healthcheck:
