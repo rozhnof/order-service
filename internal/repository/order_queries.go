@@ -4,7 +4,7 @@ const createClientQuery = `
 	INSERT INTO clients(email) 
 	VALUES ($1) 
 	ON CONFLICT (email) 
-	DO UPDATE SET email = email 
+	DO UPDATE SET email = $1 
 	RETURNING id
 `
 const createOrderQuery = `
