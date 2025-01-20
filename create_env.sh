@@ -3,8 +3,6 @@
 ENV_FILE_PATH=".env"
 
 ENV_VARS=(
-    "PUBLISHER_ADDRESS=:8080"
-    
     "POSTGRES_ADDRESS=postgres"
     "POSTGRES_PORT=5432"
     "POSTGRES_USER=user"
