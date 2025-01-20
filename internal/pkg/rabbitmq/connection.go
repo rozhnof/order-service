@@ -8,8 +8,6 @@ type Connection struct {
 	*amqp.Connection
 }
 
-const URL = "amqp://%s:%s@%s:%s/"
-
 func NewConnection(rabbitURL string) (Connection, error) {
 	conn, err := amqp.Dial(rabbitURL)
 	if err != nil {

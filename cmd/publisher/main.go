@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -34,8 +33,7 @@ func main() {
 		return
 	}
 
-	rabbitURL := fmt.Sprintf(rabbitmq.URL, cfg.RabbitMQ.User, cfg.RabbitMQ.Password, cfg.RabbitMQ.Address, cfg.RabbitMQ.Port)
-	rabbitConnection, err := rabbitmq.NewConnection(rabbitURL)
+	rabbitConnection, err := rabbitmq.NewConnection(cfg.RabbitMQ.ConnectionURL())
 	if err != nil {
 		logger.Error("init rabbitmq connection failed", slog.String("error", err.Error()))
 		return
@@ -59,8 +57,7 @@ func main() {
 	}()
 	logger.Info("init rabbitmq channel success")
 
-	postgresURL := fmt.Sprintf(postgres.URL, cfg.Postgres.User, cfg.Postgres.Password, cfg.Postgres.Address, cfg.Postgres.Port, cfg.Postgres.DB)
-	postgresDatabase, err := postgres.NewDatabase(ctx, postgresURL)
+	postgresDatabase, err := postgres.NewDatabase(ctx, cfg.Postgres.ConnectionURL())
 	if err != nil {
 		logger.Error("init postgres failed", slog.String("error", err.Error()))
 		return

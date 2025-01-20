@@ -11,8 +11,6 @@ type Database struct {
 	*pgxpool.Pool
 }
 
-const URL = "postgres://%s:%s@%s:%s/%s?sslmode=disable"
-
 func NewDatabase(ctx context.Context, postgresURL string) (Database, error) {
 	pool, err := pgxpool.New(ctx, postgresURL)
 	if err != nil {
